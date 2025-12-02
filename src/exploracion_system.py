@@ -1,22 +1,4 @@
 import pygame
-import sys
-
-# Inicializar Pygame
-pygame.init()
-
-# Configuración de la ventana
-ANCHO = 800
-ALTO = 600
-pantalla = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("Sistema de Exploración")
-
-# Colores
-NEGRO = (0, 0, 0)
-BLANCO = (255, 255, 255)
-
-# FPS
-reloj = pygame.time.Clock()
-FPS = 60
 
 class Personaje:
     def __init__(self, x, y, nombre, color_debug=(255, 0, 0)):
@@ -100,7 +82,7 @@ class Party:
             for _ in range(personaje.max_historial):
                 personaje.actualizar_historial()
     
-    def mover(self, teclas, mapa):
+    def mover(self, teclas, mapa, ancho_pantalla, alto_pantalla):
         # Guardar posición anterior del líder
         pos_anterior_x = self.lider.x
         pos_anterior_y = self.lider.y
@@ -131,8 +113,8 @@ class Party:
             self.lider.surface = self.lider.sprites[self.lider.direccion]
         
         # Mantener al líder dentro de la pantalla
-        self.lider.x = max(0, min(self.lider.x, ANCHO - self.lider.ancho))
-        self.lider.y = max(0, min(self.lider.y, ALTO - self.lider.alto))
+        self.lider.x = max(0, min(self.lider.x, ancho_pantalla - self.lider.ancho))
+        self.lider.y = max(0, min(self.lider.y, alto_pantalla - self.lider.alto))
         
         # Verificar colisiones del líder
         if mapa.hay_colision(self.lider.x, self.lider.y, self.lider.ancho, self.lider.alto):
@@ -165,29 +147,29 @@ class Party:
         # Dibujar en orden inverso para que el líder esté adelante
         for personaje in reversed(self.personajes):
             personaje.dibujar(superficie)
-    
-    def get_lider(self):
-        return self.lider
 
 class Mapa:
-    def __init__(self, ruta_imagen, ruta_colisiones=None):
+    def __init__(self, ruta_imagen, ruta_colisiones, ancho, alto):
+        self.ancho = ancho
+        self.alto = alto
+
         try:
             self.imagen = pygame.image.load(ruta_imagen)
-            self.imagen = pygame.transform.scale(self.imagen, (ANCHO, ALTO))
+            self.imagen = pygame.transform.scale(self.imagen, (ancho, alto))
         except:
             print("No se pudo cargar la imagen. Usando fondo de prueba.")
-            self.imagen = pygame.Surface((ANCHO, ALTO))
+            self.imagen = pygame.Surface((ancho, alto))
             self.imagen.fill((50, 100, 50))
-            for i in range(0, ANCHO, 32):
-                pygame.draw.line(self.imagen, (40, 80, 40), (i, 0), (i, ALTO))
-            for i in range(0, ALTO, 32):
-                pygame.draw.line(self.imagen, (40, 80, 40), (0, i), (ANCHO, i))
+            for i in range(0, ancho, 32):
+                pygame.draw.line(self.imagen, (40, 80, 40), (i, 0), (i, alto))
+            for i in range(0, alto, 32):
+                pygame.draw.line(self.imagen, (40, 80, 40), (0, i), (ancho, i))
         
         self.mapa_colisiones = None
         if ruta_colisiones:
             try:
                 self.mapa_colisiones = pygame.image.load(ruta_colisiones)
-                self.mapa_colisiones = pygame.transform.scale(self.mapa_colisiones, (ANCHO, ALTO))
+                self.mapa_colisiones = pygame.transform.scale(self.mapa_colisiones, (ancho, alto))
                 print("Mapa de colisiones cargado correctamente.")
             except:
                 print("No se pudo cargar el mapa de colisiones.")
@@ -204,7 +186,7 @@ class Mapa:
         ]
         
         for px, py in esquinas:
-            if 0 <= px < ANCHO and 0 <= py < ALTO:
+            if 0 <= px < self.ancho and 0 <= py < self.alto:
                 color = self.mapa_colisiones.get_at((px, py))
                 if color[0] < 50 and color[1] < 50 and color[2] < 50:
                     return True
@@ -214,33 +196,28 @@ class Mapa:
     def dibujar(self, superficie):
         superficie.blit(self.imagen, (0, 0))
 
-# Crear objetos del juego
-mapa = Mapa("Pokerune-main/assets/Mapa_Inicial/Secciones/seccion 1/mapa inicial seccion 1.jpeg", "Pokerune-main/assets/Mapa_Inicial/Secciones/seccion 1/colisiones.png")
-party = Party(ANCHO // 2, ALTO // 2)
+class JuegoExploracion:
+    def __init__(self, pantalla):
+        self.pantalla = pantalla
+        self.ancho = pantalla.get_width()
+        self.alto = pantalla.get_height()
 
-# Loop principal del juego
-corriendo = True
-while corriendo:
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
-            corriendo = False
-        if evento.type == pygame.KEYDOWN:
-            if evento.key == pygame.K_ESCAPE:
-                corriendo = False
-    
-    teclas = pygame.key.get_pressed()
-    
-    # Actualizar
-    party.mover(teclas, mapa)
-    
-    # Dibujar
-    mapa.dibujar(pantalla)
-    party.dibujar(pantalla)
-    
-    # Actualizar pantalla
-    pygame.display.flip()
-    reloj.tick(FPS)
+        self.mapa = Mapa("Pokerune-main/assets/Mapa_Inicial/Secciones/seccion 1/mapa inicial seccion 1.jpeg", "Pokerune-main/assets/Mapa_Inicial/Secciones/seccion 1/colisiones.png", self.ancho, self.alto) 
+        self.party = Party(self.ancho // 2, self.alto // 2)
 
-# Salir
-pygame.quit()
-sys.exit()
+    def actualizar(self, eventos):
+        """Actualiza el juego. Retorna False si se debe salir"""
+        for evento in pygame.event.get():
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    return False
+        
+        teclas = pygame.key.get_pressed()
+        self.party.mover(teclas, self.mapa, self.ancho, self.alto)
+
+        return True
+    
+    def dibujar(self):
+        """Dibuja el juego"""
+        self.mapa.dibujar(self.pantalla)
+        self.party.dibujar(self.pantalla)
