@@ -15,8 +15,8 @@ class Personaje:
         self.max_historial = 20  # Cuántas posiciones recordar
 
         # Dimensiones del sprite
-        self.ancho = 45
-        self.alto = 55
+        self.ancho = 50
+        self.alto = 60
         
         # Cargar sprites
         self.animaciones = {}
@@ -160,7 +160,7 @@ class Party:
                 personaje_actual = self.personajes[i]
                 
                 # El seguidor sigue la posición retrasada del anterior
-                distancia_retraso = 15
+                distancia_retraso = 18
                 if len(personaje_anterior.historial_posiciones) > distancia_retraso:
                     pos_historica = personaje_anterior.historial_posiciones[-distancia_retraso]
                     personaje_actual.seguir_posicion(
@@ -263,3 +263,4 @@ class JuegoExploracion:
         """Dibuja el juego"""
         self.mapa.dibujar(self.pantalla)
         self.party.dibujar(self.pantalla)
+
