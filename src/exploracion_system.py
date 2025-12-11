@@ -1,4 +1,5 @@
 import pygame
+from animaciones import AnimacionSprite
 
 class Personaje:
     def __init__(self, x, y, nombre, color_debug=(255, 0, 0)):
@@ -12,42 +13,69 @@ class Personaje:
         # Historial de posiciones para seguimiento
         self.historial_posiciones = []
         self.max_historial = 20  # Cuántas posiciones recordar
+
+        # Dimensiones del sprite
+        self.ancho = 45
+        self.alto = 55
         
         # Cargar sprites
-        self.sprites = {}
+        self.animaciones = {}
+        self._cargar_animaciones(nombre)
+
+    def _cargar_animaciones(self, nombre):
+        """Método para cargar las animaciones de cada personaje"""
+        # animaciones de respaldo
+        for dir in ["arriba", "abajo", "izquierda", "derecha"]:
+            superficie = pygame.Surface((self.ancho, self.alto))
+            superficie.fill(self.color_debug)
+            # Crear una "animación" falsa con un solo frame
+            class AnimacionFalsa:
+                def __init__(self, surf):
+                    self.superficie = surf
+                def actualizar(self, dt):
+                    pass
+                def get_frame_actual(self):
+                    return self.superficie
+                def reiniciar(self):
+                    pass
+            self.animaciones[dir] = AnimacionFalsa(superficie)
+
+        # Intentar cargar las animaciones reales    
         try:
-            # Rutas de los sprites
+            # Rutas de los sprites/animaciones
             if nombre == "Kris":
-                self.sprites["arriba"] = pygame.image.load("Pokerune-main/assets/Kris/Caminando/Arriba/kris arriba 1.png")
-                self.sprites["abajo"] = pygame.image.load("Pokerune-main/assets/Kris/Caminando/Abajo/kris abajo 1.png")
-                self.sprites["izquierda"] = pygame.image.load("Pokerune-main/assets/Kris/Caminando/Izquierda/kris izquierda 1.png")
-                self.sprites["derecha"] = pygame.image.load("Pokerune-main/assets/Kris/Caminando/Derecha/kris derecha 1.png")
+                self.animaciones["arriba"]= AnimacionSprite("Pokerune-main/assets/Kris/Caminando/Arriba", escala=(self.ancho, self.alto), fps_animacion=6)
+                self.animaciones["abajo"]= AnimacionSprite("Pokerune-main/assets/Kris/Caminando/Abajo", escala=(self.ancho, self.alto), fps_animacion=6)
+                self.animaciones["derecha"]= AnimacionSprite("Pokerune-main/assets/Kris/Caminando/Derecha", escala=(self.ancho, self.alto), fps_animacion=6)
+                self.animaciones["izquierda"]= AnimacionSprite("Pokerune-main/assets/Kris/Caminando/Izquierda", escala=(self.ancho, self.alto), fps_animacion=6)
             elif nombre == "Luigi":
-                self.sprites["arriba"] = pygame.image.load("Pokerune-main/assets/Luigi/Caminando/Arriba/luigi arriba 1.png")
-                self.sprites["abajo"] = pygame.image.load("Pokerune-main/assets/Luigi/Caminando/Abajo/luigi abajo 1.png")
-                self.sprites["izquierda"] = pygame.image.load("Pokerune-main/assets/Luigi/Caminando/Izquierda/luigi izquierda 1.png")
-                self.sprites["derecha"] = pygame.image.load("Pokerune-main/assets/Luigi/Caminando/Derecha/luigi derecha 1.png")
+                self.animaciones["arriba"]= AnimacionSprite("Pokerune-main/assets/Luigi/Caminando/Arriba", escala=(self.ancho, self.alto), fps_animacion=12)
+                self.animaciones["abajo"]= AnimacionSprite("Pokerune-main/assets/Luigi/Caminando/Abajo", escala=(self.ancho, self.alto), fps_animacion=12)
+                self.animaciones["derecha"]= AnimacionSprite("Pokerune-main/assets/Luigi/Caminando/Derecha", escala=(self.ancho, self.alto), fps_animacion=12)
+                self.animaciones["izquierda"]= AnimacionSprite("Pokerune-main/assets/Luigi/Caminando/Izquierda", escala=(self.ancho, self.alto), fps_animacion=12)
             elif nombre == "Garchomp":
-                # CAMBIA ESTAS RUTAS según donde tengas los sprites de Ralsei
-                self.sprites["arriba"] = pygame.image.load("Pokerune-main/assets/Garchomp/Caminando/Arriba/garchomp arriba 1.png")
-                self.sprites["abajo"] = pygame.image.load("Pokerune-main/assets/Garchomp/Caminando/Abajo/garchomp abajo 1.png")
-                self.sprites["izquierda"] = pygame.image.load("Pokerune-main/assets/Garchomp/Caminando/Izquierda/garchomp izquierda 1.png")
-                self.sprites["derecha"] = pygame.image.load("Pokerune-main/assets/Garchomp/Caminando/Derecha/garchomp derecha 1.png")
-            
-            for direccion in self.sprites:
-                self.sprites[direccion] = pygame.transform.scale(self.sprites[direccion], (45, 55))
-        except:
-            print(f"No se pudieron cargar los sprites de {nombre}. Usando sprite de prueba.")
-            self.sprites["arriba"] = pygame.Surface((32, 32))
-            self.sprites["abajo"] = pygame.Surface((32, 32))
-            self.sprites["izquierda"] = pygame.Surface((32, 32))
-            self.sprites["derecha"] = pygame.Surface((32, 32))
-            for direccion in self.sprites:
-                self.sprites[direccion].fill(self.color_debug)
+                self.animaciones["arriba"]= AnimacionSprite("Pokerune-main/assets/Garchomp/Caminando/Arriba", escala=(self.ancho, self.alto), fps_animacion=5)
+                self.animaciones["abajo"]= AnimacionSprite("Pokerune-main/assets/Garchomp/Caminando/Abajo", escala=(self.ancho, self.alto), fps_animacion=5)
+                self.animaciones["derecha"]= AnimacionSprite("Pokerune-main/assets/Garchomp/Caminando/Derecha", escala=(self.ancho, self.alto), fps_animacion=5)
+                self.animaciones["izquierda"]= AnimacionSprite("Pokerune-main/assets/Garchomp/Caminando/Izquierda", escala=(self.ancho, self.alto), fps_animacion=5)
+        except Exception as e:
+            print(f"Error cargando animaciones de {nombre}: {e}")
+            print("Usando sprites de respaldo (cuadrados de colores")
         
-        self.surface = self.sprites[self.direccion]
-        self.ancho = self.surface.get_width()
-        self.alto = self.surface.get_height()
+    def actualizar_animacion(self, delta_time, moviendo):
+        """
+        Actualiza la animación del personaje
+        
+        Args:
+            delta_time: Tiempo transcurrido en segundos
+            moviendo: Si el personaje se está moviendo
+        """
+        if moviendo:
+            # Solo animar si se está moviendo
+            self.animaciones[self.direccion].actualizar(delta_time)
+        else:
+            # Si no se mueve, reiniciar al primer frame
+            self.animaciones[self.direccion].reiniciar()
     
     def actualizar_historial(self):
         """Guarda la posición actual en el historial"""
@@ -60,18 +88,19 @@ class Personaje:
         self.x = x
         self.y = y
         self.direccion = direccion
-        self.surface = self.sprites[self.direccion]
     
     def dibujar(self, superficie):
-        superficie.blit(self.surface, (self.x, self.y))
+        # Obtener el frame actual de la animación de la dirección actual
+        frame_actual = self.animaciones[self.direccion].get_frame_actual()
+        superficie.blit(frame_actual, (self.x, self.y))
 
 class Party:
     def __init__(self, x, y):
         # Crear los 3 personajes del party
         self.personajes = [
-            Personaje(x, y, "Kris", (255, 0, 0)),      # Líder (rojo)
-            Personaje(x, y, "Luigi", (255, 0, 255)),   # Segundo (magenta)
-            Personaje(x, y, "Garchomp", (0, 255, 0))     # Tercero (verde)
+            Personaje(x, y, "Kris", (0, 0, 240)),
+            Personaje(x, y, "Luigi", (0, 255, 0)),
+            Personaje(x, y, "Garchomp", (255, 255, 255))
         ]
         
         self.lider = self.personajes[0]
@@ -82,11 +111,10 @@ class Party:
             for _ in range(personaje.max_historial):
                 personaje.actualizar_historial()
     
-    def mover(self, teclas, mapa, ancho_pantalla, alto_pantalla):
+    def mover(self, teclas, mapa, ancho_pantalla, alto_pantalla, delta_time):
         # Guardar posición anterior del líder
         pos_anterior_x = self.lider.x
         pos_anterior_y = self.lider.y
-        pos_anterior_dir = self.lider.direccion
         
         # Movimiento del líder
         moviendo = False
@@ -108,10 +136,6 @@ class Party:
             self.lider.direccion = "derecha"
             moviendo = True
         
-        # Actualizar sprite del líder
-        if moviendo:
-            self.lider.surface = self.lider.sprites[self.lider.direccion]
-        
         # Mantener al líder dentro de la pantalla
         self.lider.x = max(0, min(self.lider.x, ancho_pantalla - self.lider.ancho))
         self.lider.y = max(0, min(self.lider.y, alto_pantalla - self.lider.alto))
@@ -120,7 +144,10 @@ class Party:
         if mapa.hay_colision(self.lider.x, self.lider.y, self.lider.ancho, self.lider.alto):
             self.lider.x = pos_anterior_x
             self.lider.y = pos_anterior_y
-            return  # No actualizar seguidores si hay colisión
+            moviendo = False
+                    
+        # Actualizar animación del líder
+        self.lider.actualizar_animacion(delta_time, moviendo)
         
         # Si el líder se movió, actualizar historial y seguidores
         if moviendo:
@@ -142,6 +169,14 @@ class Party:
                         pos_historica[2]
                     )
                     personaje_actual.actualizar_historial()
+
+                # Actualizar animación de los seguidores
+                personaje_actual.actualizar_animacion(delta_time, True)
+        else:
+            # Si no se mueve, detener animaciones de todos
+            for personaje in self.personajes[1:]:
+                personaje.actualizar_animacion(delta_time, False)
+
     
     def dibujar(self, superficie):
         # Dibujar en orden inverso para que el líder esté adelante
@@ -202,18 +237,25 @@ class JuegoExploracion:
         self.ancho = pantalla.get_width()
         self.alto = pantalla.get_height()
 
+        # Reloj para calcular delta_time
+        self.reloj = pygame.time.Clock()
+
         self.mapa = Mapa("Pokerune-main/assets/Mapa_Inicial/Secciones/seccion 1/mapa inicial seccion 1.jpeg", "Pokerune-main/assets/Mapa_Inicial/Secciones/seccion 1/colisiones.png", self.ancho, self.alto) 
         self.party = Party(self.ancho // 2, self.alto // 2)
 
     def actualizar(self, eventos):
         """Actualiza el juego. Retorna False si se debe salir"""
-        for evento in pygame.event.get():
+        # Calcular delta_time en segundos
+        delta_time = self.reloj.tick(60) / 1000.0
+
+        for evento in eventos:
             if evento.type == pygame.KEYDOWN:
                 if evento.key == pygame.K_ESCAPE:
                     return False
-        
+                
         teclas = pygame.key.get_pressed()
-        self.party.mover(teclas, self.mapa, self.ancho, self.alto)
+        #pasar delta_time al método mover
+        self.party.mover(teclas, self.mapa, self.ancho, self.alto, delta_time)
 
         return True
     
